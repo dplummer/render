@@ -100,6 +100,8 @@ type Options struct {
 type HTMLOptions struct {
 	// Layout template name. Overrides Options.Layout.
 	Layout string
+	// Allows changing of output to XHTML instead of HTML. Default is "text/html"
+	HTMLContentType string
 }
 
 // Renderer is a Middleware that maps a render.Render service into the Martini handler chain. An single variadic render.Options
@@ -237,7 +239,7 @@ func (r *renderer) HTML(status int, name string, binding interface{}, htmlOpt ..
 	}
 
 	// template rendered fine, write out the result
-	r.Header().Set(ContentType, r.opt.HTMLContentType+r.compiledCharset)
+	r.Header().Set(ContentType, opt.HTMLContentType+r.compiledCharset)
 	r.WriteHeader(status)
 	io.Copy(r, out)
 }
@@ -278,10 +280,17 @@ func (r *renderer) addYield(name string, binding interface{}) {
 
 func (r *renderer) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 	if len(htmlOpt) > 0 {
+		if htmlOpt[0].Layout == "" {
+			htmlOpt[0].Layout = r.opt.Layout
+		}
+		if htmlOpt[0].HTMLContentType == "" {
+			htmlOpt[0].HTMLContentType = r.opt.HTMLContentType
+		}
 		return htmlOpt[0]
 	}
 
 	return HTMLOptions{
-		Layout: r.opt.Layout,
+		Layout:          r.opt.Layout,
+		HTMLContentType: r.opt.HTMLContentType,
 	}
 }

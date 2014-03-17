@@ -347,6 +347,30 @@ func Test_Render_Override_Layout(t *testing.T) {
 	expect(t, res.Body.String(), "another head\n<h1>jeremy</h1>\n\nanother foot\n")
 }
 
+func Test_Render_Override_HTMLContentType(t *testing.T) {
+	m := martini.Classic()
+	m.Use(Renderer(Options{
+		Directory:       "fixtures/basic",
+		HTMLContentType: "application/html",
+	}))
+
+	// routing
+	m.Get("/foobar", func(r Render) {
+		r.HTML(200, "content", "jeremy", HTMLOptions{
+			HTMLContentType: "application/xml",
+		})
+	})
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/foobar", nil)
+
+	m.ServeHTTP(res, req)
+
+	expect(t, res.Code, 200)
+	expect(t, res.Header().Get(ContentType), "application/xml; charset=UTF-8")
+	expect(t, res.Body.String(), "<h1>jeremy</h1>\n")
+}
+
 func Test_Render_NoRace(t *testing.T) {
 	// This test used to fail if run with -race
 	m := martini.Classic()
